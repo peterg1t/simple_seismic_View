@@ -15,6 +15,7 @@
 #include <QGraphicsWidget>
 #include <hilbert.h>
 #include <vector>
+#include <qtextstream.h>
 #include <wignerville.h>
 
 
@@ -357,36 +358,44 @@ void trace_ex::traceread(int trpos){
 //                //Initially we will use an analytic signal to test the calculation of the WVD
 
 ////                parameter(tt=0.008,Pi=acos(-1.)) ! tt: tiempo total de la seal, Fs: frecuencia de muestreo
-
-//                double tt=0.008;  // duration of the chirp
+//             std::complex<double> sigh[N]={0,0};
+//                double tt=2;  // duration of the chirp
 //                double Pi=acos(-1);
-//                double Fs=10000;
+//                double Fs=200;
 //                double Fn=Fs/2;   // Nyquist frequency = Sampling frequency/2.
-//                double f1=1000;
-//                double f2=2000;
+////                double f1=1000;
+////                double f2=2000;
+//                double f1=20;
+//                double f2=40;
 //                double f3=1600;
 //                double f4=1500;
 
 //                double t0=0.0; // initial time
 //                double dt=(1./Fs);
 
-//                double delta=.001*Fs;
+//                double delta=.1*Fs;
 
 //                double beta=(f2-f1)/(2*tt);
 //                double beta2=(f4-f3)/(2*tt);
 
 
-//                for(int i=0; i<N; i++) {
-//                double t=t0+i*dt;
-//                 if (i<=delta) {sig[i]={0.0,0.0};}
-//                 if(i>delta && i<=sizeof(sig)/sizeof(sig[0])-delta)
-//                    sig[i]=sin(2*Pi*(f1+beta*(t0+(qRound(i-delta))*dt))*(t0+(qRound(i-delta))*dt))+1.5*sin(2*Pi*(f3+beta2*(t0+(qRound(i-delta+delta/2.))*dt))*(t0+(qRound(i-delta+delta/2.))*dt));
-////                 sig[i]=sin(2*Pi*(f1+beta*(t0+(qRound(i-delta))*dt))*(t0+(qRound(i-delta))*dt));
 
-//                 if(i>sizeof(sig)/sizeof(sig[0])-delta) {sig[i]={0.0,0.0};}
-////                    qDebug() << i << t << delta << sizeof(sig)/sizeof(sig[0])-delta << real(sig[i]);
+
+
+
+
+
+
+//                for(int i=0; i<tt*Fs; i++) {
+//                double t=t0+i*dt;
+//                 if (i<=delta) {sigh[i]={0.0,0.0};}
+//                 if(i>delta && i<=tt*Fs-delta)
+////                    sigh[i]=sin(2*Pi*(f1+beta*(t0+(qRound(i-delta))*dt))*(t0+(qRound(i-delta))*dt))+1.5*sin(2*Pi*(f3+beta2*(t0+(qRound(i-delta+delta/2.))*dt))*(t0+(qRound(i-delta+delta/2.))*dt));
+//                 sigh[i]=sin(2*Pi*(f1+beta*(t0+(qRound(i-delta))*dt))*(t0+(qRound(i-delta))*dt));
+//                 if(i>tt*Fs-delta) {sigh[i]={0.0,0.0};}
 //                };
-////
+
+
                 //array test
 
 //                 std::complex<double> sigtest[8] = {{1,0},{1,0},{1,0},{1,0},{1,0},{1,0},{1,0},{0,0}};
@@ -399,6 +408,10 @@ void trace_ex::traceread(int trpos){
 
 //****************************************test signal******************************************************************
 
+
+
+
+
 //           Here we create sigh wich will contain the analytical signal (size of the array is a fft number)
              std::complex<double> sigh[N]={0,0};
              QVector<double> WV(tlength*N);
@@ -409,32 +422,47 @@ void trace_ex::traceread(int trpos){
              }
 
 
+
+
+
+
+
+
+
+//             QFile qc("E:/zshared/ssView/data_plot.txt");
+//             qc.open(QFile::ReadWrite);
+//             QTextStream qcstrm(&qc);
+
+
+
+
+
              hilbert myhilbert;
              myhilbert.hilbert_fwd(sigh,N);
 
 
              wignerville mywigner;
              mywigner.wignerville_1(sigh,WV,tlength,N);
-             double amplNorm = *std::max_element(WV.begin(),WV.end());  //this calculates the amplitude normalization fator for the frequency
-//             qDebug() << amplNorm;
 
 //             now we plot the Wigner-Ville transform preparing some graphics for the image
 
-//             ui->wvPlot->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom);
+             ui->wvPlot->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom);
              ui->wvPlot->axisRect()->setupFullAxesBox(true);
              ui->wvPlot->xAxis->setLabel("Time (ms)");
              ui->wvPlot->yAxis->setLabel("Frequency (Hz)");
              ui->wvPlot->yAxis->setRange(0,*std::max_element(freq.begin(),freq.end()));
              ui->wvPlot->xAxis->setRange(0,*std::max_element(time.begin(),time.end()));
              QCPColorMap *colormap = new QCPColorMap(ui->wvPlot->xAxis,ui->wvPlot->yAxis);
+             ui->wvPlot->axisRect(0)->setRangeZoom(Qt::Vertical);
+             ui->wvPlot->axisRect(0)->setRangeDrag(Qt::Vertical);
              colormap->data()->clear();
              colormap->data()->setSize(tlength,N);
              colormap->data()->setRange(QCPRange(0,*std::max_element(time.begin(),time.end())),QCPRange(0,*std::max_element(freq.begin(),freq.end())));
 
              for(int t=0;t<tlength;t++){
                  for(int i=0;i<N;i++){
-//                     colormap->data()->setCell(t,i,std::abs(WV[t*N+i])); // This should be the real value - see papers.
-                     colormap->data()->setCell(t,i,std::abs(WV[t*N+i])/amplNorm); //plotting the module of the amplitude instead of the amplitude of the real part looks better on the graph and normalizing the graph from 0 to 1.
+//                     colormap->data()->setCell(t,i,std::real(WV[t*N+i])); // This should be the real value - see papers.
+                     colormap->data()->setCell(t,i,std::abs(WV[t*N+i])); //plotting the module of the amplitude instead of the amplitude of the real part looks better on the graph and normalizing the graph from 0 to 1.
                  }
              }
 
@@ -827,7 +855,7 @@ trace_ex::trace_ex(QWidget *parent) :
     ui(new Ui::trace_ex)
 {
     ui->setupUi(this);
-    setWindowTitle("Trace view");
+    setWindowTitle("Trace Explorer");
     ui->horizontalSlider->setMinimum(1);
     ui->horizontalSlider->setTracking(false);
     QFile f(modelname);
