@@ -30,6 +30,12 @@ public slots:
 private slots:
      void on_pushButton_clicked();
      void on_spinBox_3_editingFinished();
+     void on_spinBox_2_editingFinished();
+     void on_spinBox_editingFinished();
+//     void on_spinBox_valueChanged(int arg1);
+//     void on_spinBox_2_valueChanged(int arg1);
+//     void on_spinBox_3_valueChanged(double arg1);
+     void on_pushButton_2_clicked();
 };
 
 #endif // TRACE_GROUP_EX_H
