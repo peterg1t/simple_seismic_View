@@ -47,7 +47,7 @@ void trace_ex::traceread(int trpos){
     filepos=3200+400+(240+4*tlength)*(trpos-1);
     f.seek(filepos);  //we must seek to the right trace header reading
     QByteArray thead(f.read(240));  //reading the trace header  (we don't need to do this now)
-    QVector<double> trace(tlength), traceposi(tlength), time(tlength); //Initializing vector with trace and time axis
+    QVector<double> trace(tlength), time(tlength), traceposi(tlength), timeposi(tlength); //Initializing vector with trace and time axis
 
 
 
@@ -91,13 +91,8 @@ void trace_ex::traceread(int trpos){
                  }
 
                  trace[j]=sign*(mantissa/2)*pow(16,exponent-64);
-                 if(trace[j]>=0){
-                     traceposi[j]=trace[j];
-                 }
-                 else{
-                     traceposi[j]=0;
-                 }
                  time[j]=j*intsample*1e-3;//just adding the time vector
+                 timeposi[j]=j*intsample*1e-3;//just adding the time vector
 //                 qDebug() << "trace" << trpos << j << time[j] << trace[j] << tlength;
 
                  tr_temp=0;
@@ -105,6 +100,27 @@ void trace_ex::traceread(int trpos){
                  mantissa=0;
                  j=j+1;
                  }
+
+
+                 for(int j=0; j<trace.size(); j++){
+                     if(trace[j]>0 && trace[j+1]<0){
+                      traceposi[j]=0;
+                      double yp=time[j+1]-trace[j+1]*(time[j+1]-time[j])/(trace[j+1]-trace[j]);
+                      timeposi[j]=yp;
+                     }
+                     else if(trace[j-1] < 0 && trace[j] > 0){
+                       traceposi[j]=0;
+                       double yp=time[j-1]-trace[j-1]*(time[j]-time[j-1])/(trace[j]-trace[j-1]);
+                       timeposi[j]=yp;
+                     }
+                     else if(trace[j] > 0 && trace[j+1] > 0){
+                      traceposi[j]=0;
+                     }
+                     else{
+                         traceposi[j]=trace[j];
+                     }
+                 }
+
 
 
 
@@ -264,18 +280,19 @@ void trace_ex::traceread(int trpos){
 
 
 
-//                 // This section plots the trace data adding the blank trace to achieve the wiggle effect
+////                 // This section plots the trace data adding the blank trace to achieve the wiggle effect
                  ui->tracePlot->addGraph(ui->tracePlot->yAxis,ui->tracePlot->xAxis);
                  QPen pennone;
                  pennone.setStyle(Qt::NoPen);
+//                 pennone.setStyle(Qt::SolidLine);
                  pennone.setWidth(1);
-                 pennone.setColor(QColor(1,1,1));
+                 pennone.setColor(QColor(1,255,255,255));
                  ui->tracePlot->graph(1)->setName("Trace"+QString::number(trpos));
-                 ui->tracePlot->graph(1)->setData(time,traceposi); //adding a graph
+                 ui->tracePlot->graph(1)->setData(timeposi,traceposi); //adding a graph
                  ui->tracePlot->graph(1)->setPen(pennone);
 
-                 ui->tracePlot->graph(1)->setBrush(QBrush(QColor(0,0,1)));
-//                 ui->tracePlot->graph(0)->setChannelFillGraph(ui->tracePlot->graph(1));
+                 ui->tracePlot->graph(0)->setBrush(QBrush(QColor(0,0,1)));
+                 ui->tracePlot->graph(0)->setChannelFillGraph(ui->tracePlot->graph(1));
 
 
                  connect(ui->tracePlot->yAxis,SIGNAL(rangeChanged(QCPRange)),this,SLOT(onYRangeChanged(QCPRange)));
@@ -303,6 +320,7 @@ void trace_ex::traceread(int trpos){
                 freq[0]=0;
                 for(int i=1;i<N/2;i++){
                     freq[i]=freq[i-1]+freqinc;
+//                    qDebug()<<freq[i]<<intsample;
                 }
 
 
@@ -425,18 +443,6 @@ void trace_ex::traceread(int trpos){
 
 
 
-
-
-
-
-//             QFile qc("E:/zshared/ssView/data_plot.txt");
-//             qc.open(QFile::ReadWrite);
-//             QTextStream qcstrm(&qc);
-
-
-
-
-
              hilbert myhilbert;
              myhilbert.hilbert_fwd(sigh,N);
 
@@ -446,15 +452,15 @@ void trace_ex::traceread(int trpos){
 
 //             now we plot the Wigner-Ville transform preparing some graphics for the image
 
-             ui->wvPlot->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom);
+//             ui->wvPlot->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom);
              ui->wvPlot->axisRect()->setupFullAxesBox(true);
              ui->wvPlot->xAxis->setLabel("Time (ms)");
              ui->wvPlot->yAxis->setLabel("Frequency (Hz)");
              ui->wvPlot->yAxis->setRange(0,*std::max_element(freq.begin(),freq.end()));
              ui->wvPlot->xAxis->setRange(0,*std::max_element(time.begin(),time.end()));
              QCPColorMap *colormap = new QCPColorMap(ui->wvPlot->xAxis,ui->wvPlot->yAxis);
-             ui->wvPlot->axisRect(0)->setRangeZoom(Qt::Vertical);
-             ui->wvPlot->axisRect(0)->setRangeDrag(Qt::Vertical);
+//             ui->wvPlot->axisRect(0)->setRangeZoom(Qt::Vertical);
+//             ui->wvPlot->axisRect(0)->setRangeDrag(Qt::Vertical);
              colormap->data()->clear();
              colormap->data()->setSize(tlength,N);
              colormap->data()->setRange(QCPRange(0,*std::max_element(time.begin(),time.end())),QCPRange(0,*std::max_element(freq.begin(),freq.end())));
@@ -476,7 +482,6 @@ void trace_ex::traceread(int trpos){
              colormap->setGradient(QCPColorGradient::gpJet);
              colormap->rescaleDataRange();
              ui->wvPlot->replot();
-//             if(trpos!=1){colormap->data()->clear();}
 
 
 
@@ -537,8 +542,8 @@ void trace_ex::traceread(int trpos){
 
 
            trace[j]=sign*(1+mantissa)*pow(2,exponent-127);
-           time[j]=j;//just adding some bullshittime so we can plot something
-//                 qDebug() << trace[j];
+           time[j]=j*intsample*1e-3;//just adding the time vector
+           timeposi[j]=j*intsample*1e-3;//just adding the time vector
 
            tr_temp=0;
            exponent=0;
@@ -547,6 +552,24 @@ void trace_ex::traceread(int trpos){
            }
 
 
+           for(int j=0; j<trace.size(); j++){
+               if(trace[j]>0 && trace[j+1]<0){
+                traceposi[j]=0;
+                double yp=time[j+1]-trace[j+1]*(time[j+1]-time[j])/(trace[j+1]-trace[j]);
+                timeposi[j]=yp;
+               }
+               else if(trace[j-1] < 0 && trace[j] > 0){
+                 traceposi[j]=0;
+                 double yp=time[j-1]-trace[j-1]*(time[j]-time[j-1])/(trace[j]-trace[j-1]);
+                 timeposi[j]=yp;
+               }
+               else if(trace[j] > 0 && trace[j+1] > 0){
+                traceposi[j]=0;
+               }
+               else{
+                   traceposi[j]=trace[j];
+               }
+           }
 
 
 
@@ -693,42 +716,43 @@ void trace_ex::traceread(int trpos){
 
 
 
-           // This section plots the trace data-------------------------------
-                            ui->tracePlot->addGraph(ui->tracePlot->yAxis,ui->tracePlot->xAxis);
-                            QPen pen;
-                            pen.setStyle(Qt::SolidLine);
-                            pen.setWidth(1);
-                            pen.setColor(QColor(1,1,1));
-                            ui->tracePlot->graph(0)->setName("Trace"+QString::number(trpos));
-                            ui->tracePlot->graph(0)->setData(time,trace); //adding a graph
-                            ui->tracePlot->xAxis->setLabel("Amplitude"); //adding labels
-                            ui->tracePlot->yAxis->setLabel("Time (ms)");
-                            ui->tracePlot->graph(0)->setPen(pen);
-                            ui->tracePlot->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom);
-                            ui->tracePlot->axisRect(0)->setRangeDrag(Qt::Vertical);
-                            ui->tracePlot->axisRect(0)->setRangeZoom(Qt::Vertical);
+// This section plots the trace data-------------------------------
+                 ui->tracePlot->addGraph(ui->tracePlot->yAxis,ui->tracePlot->xAxis);
+                 QPen pen;
+                 pen.setStyle(Qt::SolidLine);
+                 pen.setWidth(1);
+                 pen.setColor(QColor(1,1,1));
+                 ui->tracePlot->graph(0)->setName("Trace"+QString::number(trpos));
+                 ui->tracePlot->graph(0)->setData(time,trace); //adding a graph
+                 ui->tracePlot->xAxis->setLabel("Amplitude"); //adding labels
+                 ui->tracePlot->yAxis->setLabel("Time (ms)");
+                 ui->tracePlot->graph(0)->setPen(pen);
+                 ui->tracePlot->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom);
+                 ui->tracePlot->axisRect(0)->setRangeDrag(Qt::Vertical);
+                 ui->tracePlot->axisRect(0)->setRangeZoom(Qt::Vertical);
 
 
 
-           //                 // This section plots the trace data adding the blank trace to achieve the wiggle effect
-                            ui->tracePlot->addGraph(ui->tracePlot->yAxis,ui->tracePlot->xAxis);
-                            QPen pennone;
-                            pennone.setStyle(Qt::NoPen);
-                            pennone.setWidth(1);
-                            pennone.setColor(QColor(1,1,1));
-                            ui->tracePlot->graph(1)->setName("Trace"+QString::number(trpos));
-                            ui->tracePlot->graph(1)->setData(time,traceposi); //adding a graph
-                            ui->tracePlot->graph(1)->setPen(pennone);
+////                 // This section plots the trace data adding the blank trace to achieve the wiggle effect
+                 ui->tracePlot->addGraph(ui->tracePlot->yAxis,ui->tracePlot->xAxis);
+                 QPen pennone;
+                 pennone.setStyle(Qt::NoPen);
+//                 pennone.setStyle(Qt::SolidLine);
+                 pennone.setWidth(1);
+                 pennone.setColor(QColor(1,255,255,255));
+                 ui->tracePlot->graph(1)->setName("Trace"+QString::number(trpos));
+                 ui->tracePlot->graph(1)->setData(timeposi,traceposi); //adding a graph
+                 ui->tracePlot->graph(1)->setPen(pennone);
 
-                            ui->tracePlot->graph(1)->setBrush(QBrush(QColor(0,0,1)));
-           //                 ui->tracePlot->graph(0)->setChannelFillGraph(ui->tracePlot->graph(1));
+                 ui->tracePlot->graph(0)->setBrush(QBrush(QColor(0,0,1)));
+                 ui->tracePlot->graph(0)->setChannelFillGraph(ui->tracePlot->graph(1));
 
 
-                            connect(ui->tracePlot->yAxis,SIGNAL(rangeChanged(QCPRange)),this,SLOT(onYRangeChanged(QCPRange)));
-                            ui->tracePlot->yAxis->setRangeReversed(true);
-                            ui->tracePlot->rescaleAxes();
-                            ui->tracePlot->replot();
-           // This section plots the trace data-----------END-----------------
+                 connect(ui->tracePlot->yAxis,SIGNAL(rangeChanged(QCPRange)),this,SLOT(onYRangeChanged(QCPRange)));
+                 ui->tracePlot->yAxis->setRangeReversed(true);
+                 ui->tracePlot->rescaleAxes();
+                 ui->tracePlot->replot();
+// This section plots the trace data-----------END-----------------
 
 
 
@@ -784,56 +808,57 @@ void trace_ex::traceread(int trpos){
 
 
 //           Here we create sigh wich will contain the analytical signal (size of the array is a fft number)
-           std::complex<double> sigh[N]={0,0};
-           QVector<double> WV(tlength*N);
+             std::complex<double> sigh[N]={0,0};
+             QVector<double> WV(tlength*N);
 
 
-           for(int i=0;i<tlength;i++){
-             sigh[i]={trace[i],0};
-           }
+             for(int i=0;i<tlength;i++){
+              sigh[i]={trace[i],0};
+             }
 
 
-           hilbert myhilbert;
-           myhilbert.hilbert_fwd(sigh,N);
 
 
-           wignerville mywigner;
-           mywigner.wignerville_1(sigh,WV,tlength,N);
-           double amplNorm = *std::max_element(WV.begin(),WV.end());  //this calculates the amplitude normalization fator for the frequency
-           qDebug() << amplNorm;
+
+             hilbert myhilbert;
+             myhilbert.hilbert_fwd(sigh,N);
+
+
+             wignerville mywigner;
+             mywigner.wignerville_1(sigh,WV,tlength,N);
 
 //             now we plot the Wigner-Ville transform preparing some graphics for the image
 
 //             ui->wvPlot->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom);
-          ui->wvPlot->axisRect()->setupFullAxesBox(true);
-          ui->wvPlot->xAxis->setLabel("Time (ms)");
-          ui->wvPlot->yAxis->setLabel("Frequency (Hz)");
-          ui->wvPlot->yAxis->setRange(0,*std::max_element(freq.begin(),freq.end()));
-          ui->wvPlot->xAxis->setRange(0,*std::max_element(time.begin(),time.end()));
-          QCPColorMap *colormap = new QCPColorMap(ui->wvPlot->xAxis,ui->wvPlot->yAxis);
-          colormap->data()->clear();
-          colormap->data()->setSize(tlength,N);
-          colormap->data()->setRange(QCPRange(0,*std::max_element(time.begin(),time.end())),QCPRange(0,*std::max_element(freq.begin(),freq.end())));
+             ui->wvPlot->axisRect()->setupFullAxesBox(true);
+             ui->wvPlot->xAxis->setLabel("Time (ms)");
+             ui->wvPlot->yAxis->setLabel("Frequency (Hz)");
+             ui->wvPlot->yAxis->setRange(0,*std::max_element(freq.begin(),freq.end()));
+             ui->wvPlot->xAxis->setRange(0,*std::max_element(time.begin(),time.end()));
+             QCPColorMap *colormap = new QCPColorMap(ui->wvPlot->xAxis,ui->wvPlot->yAxis);
+//             ui->wvPlot->axisRect(0)->setRangeZoom(Qt::Vertical);
+//             ui->wvPlot->axisRect(0)->setRangeDrag(Qt::Vertical);
+             colormap->data()->clear();
+             colormap->data()->setSize(tlength,N);
+             colormap->data()->setRange(QCPRange(0,*std::max_element(time.begin(),time.end())),QCPRange(0,*std::max_element(freq.begin(),freq.end())));
 
-          for(int t=0;t<tlength;t++){
-           for(int i=0;i<N;i++){
-//            colormap->data()->setCell(t,i,WV[t*N+i]);
-            colormap->data()->setCell(t,i,std::abs(WV[t*N+i])/amplNorm);
-            }
-          }
+             for(int t=0;t<tlength;t++){
+                 for(int i=0;i<N;i++){
+//                     colormap->data()->setCell(t,i,std::real(WV[t*N+i])); // This should be the real value - see papers.
+                     colormap->data()->setCell(t,i,std::abs(WV[t*N+i])); //plotting the module of the amplitude instead of the amplitude of the real part looks better on the graph and normalizing the graph from 0 to 1.
+                 }
+             }
 
-          WV.clear();
+             WV.clear();
 
 
-          QCPColorScale *colorScale = new QCPColorScale(ui->wvPlot);
-          ui->wvPlot->plotLayout()->addElement(0,1,colorScale);
-          colorScale->setType(QCPAxis::atRight);
-          colormap->setColorScale(colorScale);
-          colormap->setGradient(QCPColorGradient::gpJet);
-          colormap->rescaleDataRange();
-
-          ui->wvPlot->replot();
-          if(trpos!=1){colormap->data()->clear();}
+             QCPColorScale *colorScale = new QCPColorScale(ui->wvPlot);
+             ui->wvPlot->plotLayout()->addElement(0,1,colorScale);
+             colorScale->setType(QCPAxis::atRight);
+             colormap->setColorScale(colorScale);
+             colormap->setGradient(QCPColorGradient::gpJet);
+             colormap->rescaleDataRange();
+             ui->wvPlot->replot();
 
 
 
@@ -860,7 +885,6 @@ trace_ex::trace_ex(QWidget *parent) :
     ui->horizontalSlider->setTracking(false);
     QFile f(modelname);
     QDataStream in(&f);
-//    f.open(QFile::ReadOnly|QFile::Text);
     f.open(QFile::ReadOnly);
     fillen=f.size();
     qDebug() << fillen << tlength;
@@ -885,13 +909,30 @@ void trace_ex::onYRangeChanged(const QCPRange &range)
 {
     QCPRange boundedRange = range;
     double lowerRangeBound = 0;
+    double upperRangeBound = tlength*intsample/(1.e3);
 
-    if(boundedRange.lower < lowerRangeBound) {  // restrict max zoom in
+
+    if(boundedRange.lower < lowerRangeBound || qFuzzyCompare(boundedRange.size(),upperRangeBound-lowerRangeBound)) {  // restrict max zoom in
         boundedRange.lower = lowerRangeBound;
         boundedRange.upper = lowerRangeBound + boundedRange.size();
+        if(boundedRange.upper > upperRangeBound){
+            boundedRange.upper = upperRangeBound;
+            ui->wvPlot->xAxis->setRange(boundedRange);
+        }
+   }
+    else if(boundedRange.upper > upperRangeBound || qFuzzyCompare(boundedRange.size(),upperRangeBound-lowerRangeBound)) {  // restrict max zoom in
+        boundedRange.upper = upperRangeBound;
+        boundedRange.lower = upperRangeBound - boundedRange.size();
+        if(boundedRange.lower < lowerRangeBound){
+            boundedRange.lower = lowerRangeBound;
+            ui->wvPlot->xAxis->setRange(boundedRange);
+        }
    }
 
     ui->tracePlot->yAxis->setRange(boundedRange);
+    ui->wvPlot->xAxis->setRange(boundedRange);
+    ui->wvPlot->replot();
+
 
 }
 
@@ -899,13 +940,29 @@ void trace_ex::onspecXRangeChanged(const QCPRange &range)
 {
     QCPRange boundedRange = range;
     double lowerRangeBound = 0;
+    double upperRangeBound = 1.e6/(2.0*intsample);
 
-    if(boundedRange.lower < lowerRangeBound) {  // restrict max zoom in
+    if(boundedRange.lower < lowerRangeBound || qFuzzyCompare(boundedRange.size(),upperRangeBound-lowerRangeBound)) {  // restrict max zoom in
         boundedRange.lower = lowerRangeBound;
         boundedRange.upper = lowerRangeBound + boundedRange.size();
+        if(boundedRange.upper > upperRangeBound){
+            boundedRange.upper = upperRangeBound;
+            ui->wvPlot->yAxis->setRange(boundedRange);
+        }
+    }
+
+    else if(boundedRange.upper > upperRangeBound || qFuzzyCompare(boundedRange.size(),upperRangeBound-lowerRangeBound)) {  // restrict max zoom in
+        boundedRange.upper = upperRangeBound;
+        boundedRange.lower = upperRangeBound - boundedRange.size();
+        if(boundedRange.lower < lowerRangeBound){
+            boundedRange.lower = lowerRangeBound;
+            ui->wvPlot->yAxis->setRange(boundedRange);
+        }
    }
 
     ui->specPlot->xAxis->setRange(boundedRange);
+    ui->wvPlot->yAxis->setRange(boundedRange);
+    ui->wvPlot->replot();
 
 }
 
