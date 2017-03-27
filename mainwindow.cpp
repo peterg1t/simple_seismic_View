@@ -197,7 +197,7 @@ void MainWindow::on_actionExplore_SEGY_by_groups_triggered()
           //    launching trace_exp (trace explorer window) as well with trace number one once we have the file and trace length.
           tracewingrp = new trace_group_ex;
           tracewingrp->show();
-          tracewingrp->traceread(1,1);
+
 
 //          QQuickWidget *view = new QQuickWidget;
 //          view->setSource(QUrl::fromLocalFile("geom_map.qml"));

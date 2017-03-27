@@ -44,10 +44,6 @@ geom_ex::geom_ex(QWidget *parent) :
     f.open(QFile::ReadOnly);
 
     QVector2D sp_coord((fillen-3200-400)/(240+4*tlength)-1,(fillen-3200-400)/(240+4*tlength)-1);
-//    QVector<double> spn((fillen-3200-400)/(240+4*tlength)-1); //Initializing vectors for shot number, shotx and shoty. fillen is the number of traces in the segy calculated in mainwindow.cpp
-//    QVector<double> spx((fillen-3200-400)/(240+4*tlength)-1), spy((fillen-3200-400)/(240+4*tlength)-1);
-//    QVector<double> recx((fillen-3200-400)/(240+4*tlength)-1), recy((fillen-3200-400)/(240+4*tlength)-1); //Initializing vectors for shot number, shotx and shoty. fillen is the number of traces in the segy calculated in mainwindow.cpp
-
     QVector<double> spn(0); //Initializing vectors for shot number, shotx and shoty. fillen is the number of traces in the segy calculated in mainwindow.cpp
     QVector<double> spx(0), spy(0);
     QVector<double> recx(0), recy(0); //Initializing vectors for shot number, shotx and shoty. fillen is the number of traces in the segy calculated in mainwindow.cpp
@@ -212,8 +208,6 @@ geom_ex::geom_ex(QWidget *parent) :
     ui->mapplot->graph(1)->setLineStyle(QCPGraph::lsNone);
     ui->mapplot->graph(1)->setPen(recpen);
     ui->mapplot->graph(1)->addData(recx,recy);  //check QCPMapData
-//    ui->mapplot->axisRect(1)->setRangeDrag(Qt::Horizontal|Qt::Vertical);
-//    ui->mapplot->axisRect(1)->setRangeZoom(Qt::Horizontal|Qt::Vertical);
     ui->mapplot->rescaleAxes();
 
 

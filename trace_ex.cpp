@@ -894,8 +894,6 @@ trace_ex::trace_ex(QWidget *parent) :
     connect(ui->horizontalSlider,SIGNAL(valueChanged(int)),this,SLOT(traceread(int)));
 
 
-
-
 }
 
 
