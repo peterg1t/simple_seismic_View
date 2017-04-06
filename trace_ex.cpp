@@ -494,10 +494,6 @@ void trace_ex::traceread(int trpos){
 
 
 
-
-
-
-
     }   //  end 4-byte IBM floating point
     else if (code==2){
             QByteArray btrace(f.read(4*tlength));}// 4-byte two's complement integer
@@ -892,6 +888,7 @@ trace_ex::trace_ex(QWidget *parent) :
     f.close();
     trpos=ui->horizontalSlider->value();
     connect(ui->horizontalSlider,SIGNAL(valueChanged(int)),this,SLOT(traceread(int)));
+    connect(ui->tracePlot,&QCustomPlot::mouseMove, this, &trace_ex::slotMouseMove);
 
 
 }
@@ -964,6 +961,17 @@ void trace_ex::onspecXRangeChanged(const QCPRange &range)
 
 }
 
+
+
+void trace_ex::slotMouseMove(QMouseEvent *ev){
+
+    long yc = ui->tracePlot->yAxis->pixelToCoord(ev->pos().y());
+    double xc = ui->tracePlot->graph(0)->data().data()->at(yc*1e3/intsample)->value;
+    ui->xval->setText("value="+QString::number(xc,'f',6));
+    ui->yval->setText("time="+QString::number(yc,10));
+
+
+}
 
 
 

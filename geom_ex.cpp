@@ -191,6 +191,7 @@ geom_ex::geom_ex(QWidget *parent) :
     ui->mapplot->yAxis->setLabel("Northing (m)"); //adding labels
     ui->mapplot->xAxis->setLabel("Easting (m)");
     ui->mapplot->addGraph();
+    ui->mapplot->graph(0)->setName("Shots");
     ui->mapplot->graph(0)->setScatterStyle(QCPScatterStyle::ssDisc);
     ui->mapplot->graph(0)->setLineStyle(QCPGraph::lsNone);
     ui->mapplot->graph(0)->setPen(pen);
@@ -204,11 +205,14 @@ geom_ex::geom_ex(QWidget *parent) :
     recpen.setWidth(1);
     recpen.setColor(QColor(0,0,255,255));
     ui->mapplot->addGraph();
+    ui->mapplot->graph(1)->setName("Receivers");
     ui->mapplot->graph(1)->setScatterStyle(QCPScatterStyle::ssDiamond);
     ui->mapplot->graph(1)->setLineStyle(QCPGraph::lsNone);
     ui->mapplot->graph(1)->setPen(recpen);
     ui->mapplot->graph(1)->addData(recx,recy);  //check QCPMapData
     ui->mapplot->rescaleAxes();
+
+    ui->mapplot->legend->setVisible(true);
 
 
 

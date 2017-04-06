@@ -3,6 +3,7 @@
 
 #include <QWidget>
 #include <qcustomplot.h>
+#include "paramdialog.h"
 
 namespace Ui {
 class trace_group_ex;
@@ -18,24 +19,22 @@ public:
 
 private:
     Ui::trace_group_ex *ui;
-
+    paramdialog *paramsdlg;
 
 
 
 public slots:
-     void traceread(int trpos, int grp_numtr);
+
      void onYRangeChanged(const QCPRange &range);
 
 
 private slots:
-     void on_pushButton_clicked();
-     void on_spinBox_3_editingFinished();
-     void on_spinBox_2_editingFinished();
-     void on_spinBox_editingFinished();
-//     void on_spinBox_valueChanged(int arg1);
-//     void on_spinBox_2_valueChanged(int arg1);
-//     void on_spinBox_3_valueChanged(double arg1);
-     void on_pushButton_2_clicked();
+     void grp_traceread(int grp_trpos, int grp_numtr, double grp_gain, double grp_clip);
+     void on_zoomall_clicked();
+     void on_zoomin_clicked();
+     void on_zoomout_clicked();
+     void slotMouseMove(QMouseEvent *ev);
+     void on_params_clicked();
 };
 
 #endif // TRACE_GROUP_EX_H

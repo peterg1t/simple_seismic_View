@@ -10,6 +10,8 @@
 #include <QMetaObject>
 #include <complex>
 #include <fft_complx.h>
+#include <QStatusBar>
+#include "paramdialog.h"
 
 
 extern QString modelname;
@@ -20,9 +22,9 @@ extern int code;
 extern int inittr;
 extern int numtr;
 int grp_trpos;
+int grp_numtr;
 double grp_gain;
 double grp_clip;
-int grp_numtr;
 quint32 grp_filepos;
 int grp_sign;
 double grp_mantissa;
@@ -46,15 +48,19 @@ trace_group_ex::trace_group_ex(QWidget *parent) :
     QDataStream in(&f);
     f.open(QFile::ReadOnly);
     grp_fillen=f.size();
-    ui->spinBox->setMinimum(1);
     f.close();
-    connect(ui->spinBox,SIGNAL(editingFinished()),this,SLOT(grp_traceread()));
-    connect(ui->spinBox_2,SIGNAL(editingFinished()),this,SLOT(grp_traceread()));
-    connect(ui->spinBox_3,SIGNAL(editingFinished()),this,SLOT(grp_traceread()));
-    connect(ui->spinBox_4,SIGNAL(editingFinished()),this,SLOT(grp_traceread()));
-    grp_traceread();
+    grp_trpos=1;
+    grp_numtr=1;
+    grp_gain=1.0;
+    grp_clip=0;
+    grp_traceread(grp_trpos,grp_numtr,grp_gain,grp_clip);
     ui->tracePlot->rescaleAxes();
     ui->tracePlot->replot();
+    connect(ui->tracePlot,&QCustomPlot::mouseMove, this, &trace_group_ex::slotMouseMove);
+
+    paramsdlg = new paramdialog;
+    paramsdlg->setModal(true);
+    connect(paramsdlg,SIGNAL(applyParams(int,int,double,double)),this,SLOT(grp_traceread(int,int,double,double)));
 
 
 }
@@ -65,29 +71,22 @@ trace_group_ex::trace_group_ex(QWidget *parent) :
 
 
 
-
-
-
-
-
-
-
-void trace_group_ex::grp_traceread()
+void trace_group_ex::grp_traceread(int grp_trpos,int grp_numtr, double grp_gain, double grp_clip)
 {
 
-    if(ui->spinBox->value()>(grp_fillen-3200-400)/(240+4*tlength)){
-        ui->spinBox->setValue((grp_fillen-3200-400)/(240+4*tlength));
+
+
+    if(grp_trpos>(grp_fillen-3200-400)/(240+4*tlength)){
+        grp_trpos=(grp_fillen-3200-400)/(240+4*tlength);
     }
 
-    grp_trpos=ui->spinBox->value();
-    grp_numtr=ui->spinBox_2->value();
-    grp_gain=ui->spinBox_3->value();
-    grp_clip=ui->spinBox_4->value();
+
 
     if (grp_numtr + grp_trpos > (grp_fillen-3200-400)/(240+4*tlength)+1) {
         grp_numtr = (grp_fillen-3200-400)/(240+4*tlength)-grp_trpos+1;
-        ui->spinBox_2->setValue(grp_numtr);
     }
+
+//    connect()
 
 
 //    qDebug() << "Entering trace read group" << grp_trpos << grp_numtr << (grp_fillen-3200-400)/(240+4*tlength)-1;
@@ -199,6 +198,7 @@ void trace_group_ex::grp_traceread()
                  ui->tracePlot->addGraph(ui->tracePlot->yAxis,ui->tracePlot->xAxis);
                  ui->tracePlot->graph(2*l+1)->setData(timeposi,traceposi); //adding a graph
                  ui->tracePlot->graph(2*l+1)->setPen(pennone);
+                 ui->tracePlot->graph(2*l+1)->setSelectable(QCP::stNone);
 
                  ui->tracePlot->graph(2*l)->setBrush(QBrush(QColor(0,0,1)));
                  ui->tracePlot->graph(2*l)->setChannelFillGraph(ui->tracePlot->graph(2*l+1));
@@ -206,7 +206,6 @@ void trace_group_ex::grp_traceread()
 
                  connect(ui->tracePlot->yAxis,SIGNAL(rangeChanged(QCPRange)),this,SLOT(onYRangeChanged(QCPRange)));
                  ui->tracePlot->yAxis->setRangeReversed(true);
-
 
 
 
@@ -304,6 +303,7 @@ void trace_group_ex::grp_traceread()
            ui->tracePlot->addGraph(ui->tracePlot->yAxis,ui->tracePlot->xAxis);
            ui->tracePlot->graph(2*l+1)->setData(time,trace); //adding a graph
            ui->tracePlot->graph(2*l+1)->setPen(pennone);
+           ui->tracePlot->graph(2*l+1)->setSelectable(QCP::stNone);
 
            ui->tracePlot->graph(2*l)->setBrush(QBrush(QColor(0,0,1)));
            ui->tracePlot->graph(2*l)->setChannelFillGraph(ui->tracePlot->graph(2*l+1));
@@ -332,7 +332,7 @@ void trace_group_ex::grp_traceread()
 
 
 
-    ui->tracePlot->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom);
+    ui->tracePlot->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom | QCP::iSelectPlottables);
     ui->tracePlot->axisRect(0)->setRangeDrag(Qt::Vertical|Qt::Horizontal);
     ui->tracePlot->axisRect(0)->setRangeZoom(Qt::Vertical|Qt::Horizontal);
     connect(ui->tracePlot->yAxis,SIGNAL(rangeChanged(QCPRange)),this,SLOT(onYRangeChanged(QCPRange)));
@@ -433,3 +433,38 @@ void trace_group_ex::on_zoomout_clicked()
     ui->tracePlot->xAxis->rescale(true);
     ui->tracePlot->replot();
 }
+
+
+void trace_group_ex::slotMouseMove(QMouseEvent *ev){
+
+    int l = 0;
+    long yc = ui->tracePlot->yAxis->pixelToCoord(ev->pos().y());
+    double xc = 0.0;
+    if(ui->tracePlot->selectedGraphs().count()!=0){
+    QString graphname=ui->tracePlot->selectedGraphs().first()->name();
+//    QRegExp rx("(-?\\d+(?:[\\.,]\\d+(?:e\\d+)?)?)");
+    QRegExp rx("\\d\\d?\\d?\\d?$");
+    int pos=rx.indexIn(graphname);
+    if(pos>-1){l = (rx.cap(0).toInt()-1)/2;}
+    xc = ui->tracePlot->selectedGraphs().first()->data().data()->at(yc*1e3/intsample)->value-l*1.000005;
+    }
+    ui->xval->setText("value="+QString::number(xc,'f',6));
+    ui->yval->setText("time="+QString::number(yc,10));
+
+
+}
+
+
+
+
+void trace_group_ex::on_params_clicked()
+{
+
+    paramsdlg->show();
+    paramsdlg->activateWindow();
+
+
+}
+
+
+
