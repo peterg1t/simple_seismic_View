@@ -7,6 +7,9 @@
 #include <QSplineSeries>
 #include <complex>
 #include <QVector>
+#include <QGesture>
+#include <QGestureEvent>
+#include <QWheelEvent>
 
 namespace Ui {
 class trace_ex;
@@ -34,6 +37,8 @@ public slots:
 
 
 private slots:
+     void slotMouseMove(QMouseEvent *ev);
+
 
 
 
