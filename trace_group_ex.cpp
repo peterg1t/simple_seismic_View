@@ -67,7 +67,23 @@ trace_group_ex::trace_group_ex(QWidget *parent) :
 
 
 
+void trace_group_ex::on_fitall_clicked()
+{
+    ui->tracePlot->rescaleAxes();
+    ui->tracePlot->replot();
+}
 
+void trace_group_ex::on_fitvert_clicked()
+{
+    ui->tracePlot->yAxis->rescale(true);
+    ui->tracePlot->replot();
+}
+
+void trace_group_ex::on_fithor_clicked()
+{
+    ui->tracePlot->xAxis->rescale(true);
+    ui->tracePlot->replot();
+}
 
 
 
@@ -215,7 +231,92 @@ void trace_group_ex::grp_traceread(int grp_trpos,int grp_numtr, double grp_gain,
 
     }   //  end 4-byte IBM floating point
     else if (code==2){
-            QByteArray btrace(f.read(4*tlength));}// 4-byte two's complement integer
+
+
+
+
+        QByteArray btrace(f.read(4*tlength));
+
+//               This loop will make groups of 4 bytes
+       int j =0;
+       for (quint32 i = 0 ; i < 4*tlength ;i = i + 4) {
+       tr_group_temp.append(btrace[i]);
+       tr_group_temp.append(btrace[i+1]);
+       tr_group_temp.append(btrace[i+2]);
+       tr_group_temp.append(btrace[i+3]);
+       tr_group_temp=QByteArray::number(tr_group_temp.toHex().toLongLong(nullptr,16),2); //converting the array to a binary 0,1
+//                 if(grp_trpos=0 && j==0) qDebug() << "Plotting binary for sample j=" << j << tr_group_temp;
+//                 exit(0);
+       while(tr_group_temp.length()<32) {
+        tr_group_temp.insert(0,"0"); // inserting leading zeroes
+       }
+       if(tr_group_temp.at(0)=='1')  grp_sign =-1; else grp_sign=1; // if bit 0 is 1 number is negative
+
+
+       trace[j]= -(tr_group_temp.at(0)-48)*pow(2,31);
+       for(int k=1; k<32; k++){
+           trace[j]+=(tr_group_temp.at(k)-48)*qPow(2,31-k);
+       }
+
+
+       time[j]=j*intsample*1e-3;//just adding the time vector
+       timeposi[j]=j*intsample*1e-3;
+
+       tr_group_temp=0;
+       j=j+1;
+       }
+
+       for(int j=0; j<trace.size(); j++){
+           if(trace[j]>0 && trace[j+1]<0){
+            traceposi[j]=0;
+            double yp=time[j+1]-trace[j+1]*(time[j+1]-time[j])/(trace[j+1]-trace[j]);
+            timeposi[j]=yp;
+           }
+           else if(trace[j-1] < 0 && trace[j] > 0){
+             traceposi[j]=0;
+             double yp=time[j-1]-trace[j-1]*(time[j]-time[j-1])/(trace[j]-trace[j-1]);
+             timeposi[j]=yp;
+           }
+           else if(trace[j] > 0 && trace[j+1] > 0){
+            traceposi[j]=0;
+           }
+           else{
+               traceposi[j]=trace[j];
+           }
+       }
+
+       for(int j=0; j<trace.size(); j++){
+           trace[j]=trace[j]+l*1.000005;
+           traceposi[j]=traceposi[j]+l*1.000005;
+       }
+
+
+
+
+
+       // This section plots the trace data
+       ui->tracePlot->addGraph(ui->tracePlot->yAxis,ui->tracePlot->xAxis);
+       ui->tracePlot->graph(2*l)->setData(time,trace); //adding a graph
+       ui->tracePlot->graph(2*l)->setPen(pen);
+
+       ui->tracePlot->addGraph(ui->tracePlot->yAxis,ui->tracePlot->xAxis);
+       ui->tracePlot->graph(2*l+1)->setData(timeposi,traceposi); //adding a graph
+       ui->tracePlot->graph(2*l+1)->setPen(pennone);
+       ui->tracePlot->graph(2*l+1)->setSelectable(QCP::stNone);
+
+       ui->tracePlot->graph(2*l)->setBrush(QBrush(QColor(0,0,1)));
+       ui->tracePlot->graph(2*l)->setChannelFillGraph(ui->tracePlot->graph(2*l+1));
+
+
+       connect(ui->tracePlot->yAxis,SIGNAL(rangeChanged(QCPRange)),this,SLOT(onYRangeChanged(QCPRange)));
+       ui->tracePlot->yAxis->setRangeReversed(true);
+
+}
+
+
+
+
+
     else if (code==3){QByteArray trace(f.read(2*tlength));}  // 2-byte two's complement integer
     else if (code==4){QByteArray trace(f.read(4*tlength));}  // 4-byte fixed-point with gain
     else if (code==5){ // start 4-byte IEEE floating-point
@@ -403,38 +504,6 @@ void trace_group_ex::onYRangeChanged(const QCPRange &range)
 }
 
 
-
-
-
-
-
-
-trace_group_ex::~trace_group_ex()
-{
-    delete ui;
-}
-
-
-
-void trace_group_ex::on_zoomall_clicked()
-{
-    ui->tracePlot->rescaleAxes();
-    ui->tracePlot->replot();
-}
-
-void trace_group_ex::on_zoomin_clicked()
-{
-    ui->tracePlot->yAxis->rescale(true);
-    ui->tracePlot->replot();
-}
-
-void trace_group_ex::on_zoomout_clicked()
-{
-    ui->tracePlot->xAxis->rescale(true);
-    ui->tracePlot->replot();
-}
-
-
 void trace_group_ex::slotMouseMove(QMouseEvent *ev){
 
     int l = 0;
@@ -462,9 +531,24 @@ void trace_group_ex::on_params_clicked()
 
     paramsdlg->show();
     paramsdlg->activateWindow();
-
-
 }
+
+
+
+
+
+trace_group_ex::~trace_group_ex()
+{
+    delete ui;
+}
+
+
+
+
+
+
+
+
 
 
 

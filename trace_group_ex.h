@@ -30,11 +30,11 @@ public slots:
 
 private slots:
      void grp_traceread(int grp_trpos, int grp_numtr, double grp_gain, double grp_clip);
-     void on_zoomall_clicked();
-     void on_zoomin_clicked();
-     void on_zoomout_clicked();
      void slotMouseMove(QMouseEvent *ev);
      void on_params_clicked();
+     void on_fitall_clicked();
+     void on_fitvert_clicked();
+     void on_fithor_clicked();
 };
 
 #endif // TRACE_GROUP_EX_H
