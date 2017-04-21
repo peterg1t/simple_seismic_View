@@ -43,7 +43,7 @@ private slots:
 private:
     Ui::MainWindow *ui; //declaring ui of main windows
     trace_ex *tracewin; // declaring ui of windows trace_ex
-    geom_ex *geomwin; // declaring ui of windows trace_ex
+//    geom_ex *geomwin; // declaring ui of windows trace_ex
     trace_group_ex *tracewingrp; // declaring ui of windows trace_group_ex
 
 

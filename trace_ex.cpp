@@ -17,6 +17,7 @@
 #include <vector>
 #include <qtextstream.h>
 #include <wignerville.h>
+#include <geom_ex.h>
 
 
 using std::vector;
@@ -463,12 +464,9 @@ void trace_ex::traceread(int trpos){
              ui->wvPlot->yAxis->setRange(0,*std::max_element(freq.begin(),freq.end()));
              ui->wvPlot->xAxis->setRange(0,*std::max_element(time.begin(),time.end()));
              QCPColorMap *colormap = new QCPColorMap(ui->wvPlot->xAxis,ui->wvPlot->yAxis);
-//             ui->wvPlot->axisRect(0)->setRangeZoom(Qt::Vertical);
-//             ui->wvPlot->axisRect(0)->setRangeDrag(Qt::Vertical);
              colormap->data()->clear();
              colormap->data()->setSize(tlength,N);
              colormap->data()->setRange(QCPRange(0,*std::max_element(time.begin(),time.end())),QCPRange(0,*std::max_element(freq.begin(),freq.end())));
-
              for(int t=0;t<tlength;t++){
                  for(int i=0;i<N;i++){
 //                     colormap->data()->setCell(t,i,std::real(WV[t*N+i])); // This should be the real value - see papers.
@@ -1355,6 +1353,9 @@ trace_ex::trace_ex(QWidget *parent) :
     trpos=ui->horizontalSlider->value();
     connect(ui->horizontalSlider,SIGNAL(valueChanged(int)),this,SLOT(traceread(int)));
     connect(ui->tracePlot,&QCustomPlot::mouseMove, this, &trace_ex::slotMouseMove);
+    geomwin = new geom_ex;
+    geomwin->show();
+    connect(ui->horizontalSlider,SIGNAL(valueChanged(int)),geomwin,SLOT(shotrechighlight(int)));
 
 
 }

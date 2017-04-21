@@ -44,10 +44,12 @@ geom_ex::geom_ex(QWidget *parent) :
     f.open(QFile::ReadOnly);
 
     QVector2D sp_coord((fillen-3200-400)/(240+4*tlength)-1,(fillen-3200-400)/(240+4*tlength)-1);
-    QVector<double> spn(0); //Initializing vectors for shot number, shotx and shoty. fillen is the number of traces in the segy calculated in mainwindow.cpp
+    QVector<quint32> spn(0),recn(0); //Initializing vectors for shot number, shotx and shoty. fillen is the number of traces in the segy calculated in mainwindow.cpp
     QVector<double> spx(0), spy(0);
     QVector<double> recx(0), recy(0); //Initializing vectors for shot number, shotx and shoty. fillen is the number of traces in the segy calculated in mainwindow.cpp
 
+    QVector<double> spxh(0),spyh(0);
+    QVector<double> recxh(0),recyh(0);
 
     quint32 kval=1;
     do{
@@ -133,10 +135,15 @@ geom_ex::geom_ex(QWidget *parent) :
                     spy.append(tr_lbyte2[22].toHex().toInt(nullptr,16));
                 }
 
-                if(recx.indexOf(tr_lbyte2[23].toHex().toInt(nullptr,16))==-1 && recy.indexOf(tr_lbyte2[24].toHex().toInt(nullptr,16))==-1){
+
+                //Fix receiver map!!! not all receivers are being displayed
+                quint32 temp_recn = tr_lbyte2[23].toHex().toInt(nullptr,16) * pow(10,log10(tr_lbyte2[24].toHex().toInt(nullptr,16))+1)  + tr_lbyte2[24].toHex().toInt(nullptr,16);
+                if(recn.indexOf(temp_recn)==-1){
+                    recn.append(temp_recn);
                     recx.append(tr_lbyte2[23].toHex().toInt(nullptr,16));
                     recy.append(tr_lbyte2[24].toHex().toInt(nullptr,16));
                 }
+
 
 
 
@@ -174,6 +181,12 @@ geom_ex::geom_ex(QWidget *parent) :
 
 //    }while(f.atEnd());
     }while(kval<=(fillen-3200-400)/(240+4*tlength)-1 );
+
+
+    spxh.insert(0,spx.at(0));
+    spyh.insert(0,spy.at(0));
+    recxh.insert(0,recx.at(0));
+    recyh.insert(0,recy.at(0));
 //      }while(k<=280);
 
 
@@ -192,7 +205,8 @@ geom_ex::geom_ex(QWidget *parent) :
     ui->mapplot->xAxis->setLabel("Easting (m)");
     ui->mapplot->addGraph();
     ui->mapplot->graph(0)->setName("Shots");
-    ui->mapplot->graph(0)->setScatterStyle(QCPScatterStyle::ssDisc);
+    QCPScatterStyle scatterstylesp(QCPScatterStyle::ssCircle,QColor(255,0,0,255),QColor(255,0,0,0),7);
+    ui->mapplot->graph(0)->setScatterStyle(scatterstylesp);
     ui->mapplot->graph(0)->setLineStyle(QCPGraph::lsNone);
     ui->mapplot->graph(0)->setPen(pen);
     ui->mapplot->graph(0)->addData(spx,spy);  //check QCPMapData
@@ -201,16 +215,46 @@ geom_ex::geom_ex(QWidget *parent) :
     ui->mapplot->axisRect(0)->setRangeZoom(Qt::Horizontal|Qt::Vertical);
     ui->mapplot->rescaleAxes();
 
+
     QPen recpen;
     recpen.setWidth(1);
     recpen.setColor(QColor(0,0,255,255));
     ui->mapplot->addGraph();
     ui->mapplot->graph(1)->setName("Receivers");
-    ui->mapplot->graph(1)->setScatterStyle(QCPScatterStyle::ssDiamond);
+    QCPScatterStyle scatterstylerec(QCPScatterStyle::ssCircle,QColor(0,0,255,255),QColor(0,0,255,0),7);
+    ui->mapplot->graph(1)->setScatterStyle(scatterstylerec);
     ui->mapplot->graph(1)->setLineStyle(QCPGraph::lsNone);
     ui->mapplot->graph(1)->setPen(recpen);
     ui->mapplot->graph(1)->addData(recx,recy);  //check QCPMapData
     ui->mapplot->rescaleAxes();
+
+
+
+    QPen penh;
+    penh.setWidth(1);
+    penh.setColor(QColor(255,0,0,255));
+    ui->mapplot->addGraph();
+    ui->mapplot->graph(2)->setName("Current shot");
+    QCPScatterStyle scatterstylesph(QCPScatterStyle::ssDisc,QColor(255,0,0,255),QColor(255,0,0,255),7);
+    ui->mapplot->graph(2)->setScatterStyle(scatterstylesph);
+    ui->mapplot->graph(2)->setLineStyle(QCPGraph::lsNone);
+    ui->mapplot->graph(2)->setPen(penh);
+    ui->mapplot->graph(2)->setData(spxh,spyh);  //check QCPMapData
+
+
+
+    QPen recpenh;
+    recpenh.setWidth(1);
+    recpenh.setColor(QColor(0,0,0,255));
+    ui->mapplot->addGraph();
+    ui->mapplot->graph(3)->setName("Current receiver");
+    QCPScatterStyle scatterstylerech(QCPScatterStyle::ssCircle,QColor(0,0,255,255),QColor(0,0,255,255),7);
+    ui->mapplot->graph(3)->setScatterStyle(scatterstylerech);
+    ui->mapplot->graph(3)->setLineStyle(QCPGraph::lsNone);
+    ui->mapplot->graph(3)->setPen(recpenh);
+    ui->mapplot->graph(3)->setData(recxh,recyh);  //check QCPMapData
+
+
 
     ui->mapplot->legend->setVisible(true);
 
@@ -227,12 +271,70 @@ geom_ex::geom_ex(QWidget *parent) :
 
 
 
+void geom_ex::shotrechighlight(int trpos){
+    QFile f(modelname);
+    f.open(QFile::ReadOnly);
+    f.seek(3200+400+(240+4*tlength)*(trpos-1));
+    thead=f.read(240);
+
+    int j=0;
+    for (int i = 72 ; i < 87 ;i = i + 4) {
+    hd_temp2.append(thead[i]);
+    hd_temp2.append(thead[i+1]);
+    hd_temp2.append(thead[i+2]);
+    hd_temp2.append(thead[i+3]);
+//                qDebug() << "Bytes after EBCDIC source and group coordinates"  << QString::fromLocal8Bit(hd_temp2) << hd_temp2.toHex().toInt(nullptr,16) << i << j;
+//                qDebug() << (fillen-3200-400)/(240+4*tlength)-1;
+    tr_lbyte2[j]=hd_temp2;
+    hd_temp2=0;
+    j=j+1;
+    }
+
+    QVector<double> spxh(0),spyh(0);
+    QVector<double> recxh(0),recyh(0);
+
+    spxh.insert(0,tr_lbyte2[0].toHex().toInt(nullptr,16));
+    spyh.insert(0,tr_lbyte2[1].toHex().toInt(nullptr,16));
+    recxh.insert(0,tr_lbyte2[2].toHex().toInt(nullptr,16));
+    recyh.insert(0,tr_lbyte2[3].toHex().toInt(nullptr,16));
 
 
-//void geom_ex::mousePressEvent(QMouseEvent *ev){
-//    ui->mapplot->mousePress(ev);
-//  qDebug() << ui->mapplot->mapFromGlobal(QCursor::pos()) << ui->mapplot->xAxis->pixelToCoord(ev->pos().x()) ;
-//}
+
+
+    QPen pen;
+    pen.setWidth(1);
+    pen.setColor(QColor(0,0,0,255));
+    ui->mapplot->graph(2)->setName("Current shot");
+    QCPScatterStyle scatterstylesp(QCPScatterStyle::ssDisc,QColor(255,0,0,255),QColor(255,0,0,255),7);
+    ui->mapplot->graph(2)->setScatterStyle(scatterstylesp);
+    ui->mapplot->graph(2)->setLineStyle(QCPGraph::lsNone);
+    ui->mapplot->graph(2)->setPen(pen);
+    ui->mapplot->graph(2)->setData(spxh,spyh);  //check QCPMapData
+
+
+
+    QPen recpen;
+    recpen.setWidth(1);
+    recpen.setColor(QColor(0,0,0,255));
+    ui->mapplot->graph(3)->setName("Current receiver");
+    QCPScatterStyle scatterstylerec(QCPScatterStyle::ssCircle,QColor(0,0,255,255),QColor(0,0,255,255),7);
+    ui->mapplot->graph(3)->setScatterStyle(scatterstylerec);
+    ui->mapplot->graph(3)->setLineStyle(QCPGraph::lsNone);
+    ui->mapplot->graph(3)->setPen(recpen);
+    ui->mapplot->graph(3)->setData(recxh,recyh);  //check QCPMapData
+
+    ui->mapplot->replot();
+
+
+
+
+}
+
+
+
+
+
+
 
 
 void geom_ex::slotMousePress(QMouseEvent *ev){

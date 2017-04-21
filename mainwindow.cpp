@@ -419,8 +419,8 @@ void MainWindow::on_actionExplore_seq_triggered()
           //    launching trace_exp (trace explorer window) as well with trace number one once we have the file and trace length.
           tracewin = new trace_ex;
           tracewin->traceread(1);
-          geomwin = new geom_ex;
-          geomwin->show();
+//          geomwin = new geom_ex;
+//          geomwin->show();
           tracewin->show();
 
 

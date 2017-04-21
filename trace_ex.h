@@ -10,6 +10,7 @@
 #include <QGesture>
 #include <QGestureEvent>
 #include <QWheelEvent>
+#include <geom_ex.h>
 
 namespace Ui {
 class trace_ex;
@@ -22,11 +23,11 @@ class trace_ex : public QWidget
 public:
     explicit trace_ex(QWidget *parent = 0);
     ~trace_ex();
+    friend class geom_ex;
 
 private:
-    Ui::trace_ex *ui;    
-
-
+    Ui::trace_ex *ui;
+    geom_ex *geomwin;
 
 
 public slots:

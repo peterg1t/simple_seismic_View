@@ -28,6 +28,7 @@ public:
 //    QScatterSeries *recs = new QScatterSeries();
 //    QScatterSeries *shots = new QScatterSeries();
     double markersize = 3;
+    friend class trace_ex;
 
 
 protected:
@@ -37,6 +38,7 @@ private slots:
 //    void mousePressEvent(QMouseEvent *ev);
     void slotMousePress(QMouseEvent *ev);
     void slotMouseMove(QMouseEvent *ev);
+    void shotrechighlight(int trpos);
 
 
 private:
