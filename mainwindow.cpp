@@ -15,7 +15,7 @@
 #include <QMenuBar>
 #include <QStatusBar>
 #include <QCloseEvent>
-#include <QtQuickWidgets/QQuickWidget>
+//#include <QtQuickWidgets/QQuickWidget>
 #include <QtLocation>
 #include <QtCharts>
 #include <QtCharts/QChartView>
@@ -39,6 +39,8 @@ int fileformat;
 quint32 tlength;
 int code;
 quint32 filelen;
+bool filterswitch=false;
+int unit;
 
 
 
@@ -121,7 +123,17 @@ void MainWindow::on_actionCreate_geometry_from_model_triggered()
 
 void MainWindow::on_actionAbout_triggered()
 {
-    QApplication::quit();
+//    QApplication::quit();
+    QMessageBox msgbox;
+//        msgbox.warning(0,"Warning","Please select a SEGY file");
+        msgbox.setText("Version: 1.1.3\n"
+                       "\n"
+                       "Author: Pedro Enrique Martinez\n"
+                       "Address: Calgary, Canada\n"
+                       "Email: pedro.enrique.83@gmail.com\n"
+                       "Phone: +1-587-700-0722\n");
+        msgbox.exec();
+
 }
 
 
@@ -187,13 +199,15 @@ void MainWindow::on_actionExplore_SEGY_by_groups_triggered()
           }
 
 
- //      Reading from the binary header sample integers and trace length
+ //      Reading from the binary header sample integers, trace length and unit measurement.
           intsample=lbyte[5].toHex().toInt(&ok,16);
-          qDebug() << intsample;
+//          qDebug() << intsample;
           tlength=lbyte[7].toHex().toInt(&ok,16);
           code=lbyte[9].toHex().toInt(&ok,16);
+          unit=lbyte[24].toHex().toInt(&ok,16);
           qDebug() << "Format code" << code;
-          qDebug() << "Trace length" << tlength;
+//          qDebug() << "Trace length" << tlength;
+//          qDebug() << "Unit measurement" << unit;
           //    launching trace_exp (trace explorer window) as well with trace number one once we have the file and trace length.
           tracewingrp = new trace_group_ex;
           tracewingrp->show();
@@ -405,20 +419,23 @@ void MainWindow::on_actionExplore_seq_triggered()
           temp.append(reel[i]);
           temp.append(reel[i+1]);
           lbyte[j]=temp;
+//          qDebug() << j << lbyte[j].toHex().toInt(&ok,16);
           temp=0;
           j=j+1;
           }
 
  //      Reading from the binary header sample integers and trace length
           intsample=lbyte[5].toHex().toInt(&ok,16);
-          qDebug() << intsample;
+//          qDebug() << intsample;
           tlength=lbyte[7].toHex().toInt(&ok,16);
           code=lbyte[9].toHex().toInt(&ok,16);
-          qDebug() << "Format code" << code;
-          qDebug() << "Trace length" << tlength;
+          unit=lbyte[24].toHex().toInt(&ok,16);
+//          qDebug() << "Format code" << code;
+//          qDebug() << "Trace length" << tlength;
+//          qDebug() << "Unit measurement" << unit;
           //    launching trace_exp (trace explorer window) as well with trace number one once we have the file and trace length.
           tracewin = new trace_ex;
-          tracewin->traceread(1);
+          tracewin->traceread(1,false,true);
 //          geomwin = new geom_ex;
 //          geomwin->show();
           tracewin->show();
@@ -582,3 +599,37 @@ void MainWindow::on_actionExplore_seq_triggered()
 
 
 
+
+void MainWindow::on_actionExplore_SU_triggered()
+{
+    // Here we will explore the SU files and open the by groups
+
+    modelname = QFileDialog::getOpenFileName(this,
+    tr("Open Model"), "D:/Estudios/Informatica/WaveModeling", tr("Model Files (*.su)"));
+     QFile f(modelname);
+     QDataStream in(&f);
+     QMessageBox msgbox;
+
+     if (!f.open(QFile::ReadOnly|QFile::Text)) {
+         msgbox.warning(0,"Warning","Please select a SU file");
+ //        msgbox.setText("The file could not be opened");
+ //        msgbox.exec();
+         return;
+     }
+
+              code=0;
+
+ //closing the opened file
+          f.close();
+    //    launching trace_exp (trace explorer window) as well with trace number one once we have the file and trace length.
+    tracewingrp = new trace_group_ex;
+    tracewingrp->show();
+
+
+
+
+
+
+
+
+}

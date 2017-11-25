@@ -10,6 +10,7 @@
 //#include <QScatterSeries>
 #include <QGestureEvent>
 #include <qcustomplot.h>
+#include <trace_ex.h>
 
 
 //using namespace QtCharts;
@@ -31,14 +32,23 @@ public:
     friend class trace_ex;
 
 
+
 protected:
+
+public slots:
+    void onhistXRangeChanged(const QCPRange &range);
+
 
 
 private slots:
 //    void mousePressEvent(QMouseEvent *ev);
-    void slotMousePress(QMouseEvent *ev);
+    void slotMouseClick(QMouseEvent *ev);
+    void slotMouseDoubleClick(QMouseEvent *ev);
     void slotMouseMove(QMouseEvent *ev);
     void shotrechighlight(int trpos);
+    void on_measure_toggled(bool checked);
+    void mapread(int bi[], int bl[]);
+
 
 
 private:

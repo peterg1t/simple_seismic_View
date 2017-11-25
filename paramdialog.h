@@ -31,7 +31,7 @@ private slots:
     void on_editFin();
 
 signals:
-    void applyParams(int,int,double,double);
+    void applyParams(int,int,double,double,int);
 
 
 private:

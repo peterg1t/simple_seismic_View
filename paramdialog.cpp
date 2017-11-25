@@ -12,6 +12,7 @@ extern double grp_clip;
 extern int grp_numtr;
 extern quint32 grp_fillen;
 extern quint32 tlength;
+extern int grp_filttype;
 
 
 
@@ -83,7 +84,7 @@ void paramdialog::on_applyButton_clicked()
         ui->spinBox_2->setValue(grp_numtr);
     }
 
-    emit applyParams(grp_trpos,grp_numtr,grp_gain,grp_clip);
+    emit applyParams(grp_trpos,grp_numtr,grp_gain,grp_clip,grp_filttype);
 //    this->close();
 
 

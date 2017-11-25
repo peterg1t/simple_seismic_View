@@ -10,7 +10,8 @@
 #include <QGesture>
 #include <QGestureEvent>
 #include <QWheelEvent>
-#include <geom_ex.h>
+//#include <geom_ex.h>
+class geom_ex;
 
 namespace Ui {
 class trace_ex;
@@ -31,7 +32,9 @@ private:
 
 
 public slots:
-     void traceread(int trpos);
+     void traceread(int trpos, bool smooth, bool rescale);
+     void tracespecplot(QVector<double> &trace, int N, QVector<double> &freq, QVector<double> &time, std::complex<double> sig[], QVector<double> &possig, QVector<double> &traceposi, QVector<double> &timeposi, bool rescale);
+     void wvplot(QVector<double> &trace, int N, QVector<double> &freq, QVector<double> &time, bool smooth, bool rescale);
      void onYRangeChanged(const QCPRange &range);
      void onspecXRangeChanged(const QCPRange &range);
 
@@ -41,7 +44,21 @@ private slots:
      void slotMouseMove(QMouseEvent *ev);
 
 
+     void on_checkBox_toggled(bool checked);
 
+     void on_horizontalSlider_valueChanged(int value);
+
+     void on_tableWidgettr_cellClicked(int row, int column);
+
+     void on_toolButton_clicked();
+
+     void on_tableWidgettr_cellChanged(int row, int column);
+
+
+signals:
+
+    wvd_signal(int,bool,bool);
+    reloadTrace(int, bool, bool);
 
 
 };

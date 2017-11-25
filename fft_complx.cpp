@@ -4,6 +4,7 @@
 #include <qdebug.h>
 #include <qtimer.h>
 #include <QTime>
+#include <QtMath>
 
 fft_complx::fft_complx()
 {
@@ -14,7 +15,7 @@ fft_complx::fft_fwd(std::complex<double> x[], int N)
 {
     // DFT
     unsigned int k = N, n;
-    double thetaT = 3.14159265358979323846264338328L / N;
+    double thetaT = qAcos(-1) / N;
     std::complex<double> phiT = {cos(thetaT), sin(thetaT)};
     std::complex<double> T, y[N];
     while (k > 1)
@@ -63,6 +64,9 @@ fft_complx::fft_fwd(std::complex<double> x[], int N)
 //    std::complex<double> f = 1.0 / sqrt(N);
 //    for (unsigned int i = 0; i < N; i++)
 //        x[i] *= f;
+
+
+
 }
 
 
@@ -73,7 +77,7 @@ fft_complx::fft_bwd(std::complex<double> x[], int N)
     unsigned int k = N, n;
     double thetaT = 3.14159265358979323846264338328L / N;
     std::complex<double> phiT = {cos(thetaT), -sin(thetaT)};
-    std::complex<double> T, y[N];
+    std::complex<double> T, y[N], OFF;
     while (k > 1)
     {
         n = k;
@@ -116,11 +120,18 @@ fft_complx::fft_bwd(std::complex<double> x[], int N)
     x[a]=y[a];
     }
 
-    //// Normalize the reverse FFT
+
+
     std::complex<double> Per = {N,0};
+    //// Here we calculate the offset introduced by the filter
+    OFF=x[0]/Per;
+
+
+    //// Normalize the reverse FFT
     for (unsigned int i = 0; i < N; i++)
     {
         x[i] = x[i]/Per;
+        x[i]=x[i]-OFF;
     }
 
 }

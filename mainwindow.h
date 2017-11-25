@@ -40,6 +40,8 @@ private slots:
     void on_actionExplore_seq_triggered();
 
 
+    void on_actionExplore_SU_triggered();
+
 private:
     Ui::MainWindow *ui; //declaring ui of main windows
     trace_ex *tracewin; // declaring ui of windows trace_ex

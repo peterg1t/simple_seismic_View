@@ -74,13 +74,23 @@
      <property name="title">
       <string>SEGY</string>
      </property>
-     <addaction name="actionCreate_model"/>
-     <addaction name="actionConvert_SEGD_to_SEGY"/>
      <addaction name="actionExplore_seq"/>
      <addaction name="actionExplore_SEGY_by_groups"/>
+     <addaction name="actionCreate_model"/>
+     <addaction name="actionConvert_SEGD_to_SEGY"/>
      <addaction name="actionCreate_geometry_from_model"/>
     </widget>
+    <widget class="QMenu" name="menuSU">
+     <property name="enabled">
+      <bool>true</bool>
+     </property>
+     <property name="title">
+      <string>SU</string>
+     </property>
+     <addaction name="actionExplore_SU"/>
+    </widget>
     <addaction name="menuModel"/>
+    <addaction name="menuSU"/>
     <addaction name="actionExit"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
@@ -102,6 +112,9 @@
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
   <action name="actionCreate_model">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="text">
     <string>Create model</string>
    </property>
@@ -117,6 +130,9 @@
    </property>
   </action>
   <action name="actionConvert_SEGD_to_SEGY">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="text">
     <string>Convert SEGD to SEGY</string>
    </property>
@@ -137,6 +153,11 @@
   <action name="actionExplore_SEGY_by_groups">
    <property name="text">
     <string>Explore SEGY by groups</string>
+   </property>
+  </action>
+  <action name="actionExplore_SU">
+   <property name="text">
+    <string>Explore SU</string>
    </property>
   </action>
  </widget>
